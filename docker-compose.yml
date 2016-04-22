@@ -1,0 +1,63 @@
+version: '2'
+services:
+  sonarr:
+    image: linuxserver/sonarr
+    restart: always
+    environment:
+      - PUID=0
+      - PGID=0
+    ports:
+      -  8989:8989
+    volumes:
+      - /dev/rtc:/dev/rtc:ro
+      - /media/config:/config
+      - /media/tv:/tv
+      - /media/downloads:/downloads
+
+  couchpotato:
+    image: linuxserver/couchpotato
+    restart: always
+    environment:
+      - PUID=0
+      - PGID=0
+    ports:
+      - 5050:5050
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      -  /media/config:/config
+      -  /media/downloads:/downloads
+      -  /media/movies:/movies
+
+  sabnzbd:
+    image: linuxserver/sabnzbd
+    restart: always
+    environment:
+      - PUID=0
+      - PGID=0
+    ports:
+      -  8080:8080
+      -  9090:9090
+    volumes:
+        -  /etc/localtime:/etc/localtime:ro
+        -  /media/config:/config
+        -  /media/downloads:/downloads
+        -  /media/incomplete-downloads:/incomplete-downloads
+    depends_on:
+      - sonarr
+      - couchpotato
+
+  plex:
+     image: linuxserver/plex
+     restart: always
+     environment:
+       - PUID=0
+       - PGID=0
+       - VERSION=LATEST
+     ports:
+       -  32400:32400
+     volumes:
+       -  /media/config:/config
+       -  /media/tv:/tv
+       -  /media/movies:/movies
+     depends_on:
+       - sabnzbd
