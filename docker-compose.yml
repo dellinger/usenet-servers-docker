@@ -1,6 +1,7 @@
 version: '2'
 services:
   sonarr:
+    container_name: sonarr
     image: linuxserver/sonarr
     restart: always
     environment:
@@ -10,11 +11,12 @@ services:
       -  8989:8989
     volumes:
       - /dev/rtc:/dev/rtc:ro
-      - /media/config:/config
-      - /media/tv:/tv
-      - /media/downloads:/downloads
+      - /mnt/ellinger_media/config/sonarr:/config
+      - /mnt/ellinger_media/tv:/tv
+      - /mnt/ellinger_media/downloads:/downloads
 
   couchpotato:
+    container_name: couchpotato
     image: linuxserver/couchpotato
     restart: always
     environment:
@@ -23,12 +25,13 @@ services:
     ports:
       - 5050:5050
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      -  /media/config:/config
-      -  /media/downloads:/downloads
-      -  /media/movies:/movies
+      -  /etc/localtime:/etc/localtime:ro
+      -  /mnt/ellinger_media/config/couchpotato:/config
+      -  /mnt/ellinger_media/downloads:/downloads
+      -  /mnt/ellinger_media/movies:/movies
 
   sabnzbd:
+    container_name: sabnzbd
     image: linuxserver/sabnzbd
     restart: always
     environment:
@@ -39,25 +42,43 @@ services:
       -  9090:9090
     volumes:
         -  /etc/localtime:/etc/localtime:ro
-        -  /media/config:/config
-        -  /media/downloads:/downloads
-        -  /media/incomplete-downloads:/incomplete-downloads
+        -  /mnt/ellinger_media/config/sabnzbd:/config
+        -  /mnt/ellinger_media/downloads:/downloads
+        -  /mnt/ellinger_media/incomplete-downloads:/incomplete-downloads
     depends_on:
       - sonarr
       - couchpotato
 
   plex:
+     container_name: plex
      image: linuxserver/plex
      restart: always
      environment:
-       - PUID=0
-       - PGID=0
+       - PUID=1000
+       - PGID=999
        - VERSION=LATEST
+     network_mode: "host"
      ports:
-       -  32400:32400
+        # for access to the Plex Media Server [required]
+        - 32400:32400
+        - 32400:32400/udp
+        # for access to the Plex DLNA Server
+        - 1900:1900/udp
+        - 32469:32469
+        # for controlling Plex Home Theater via Plex Companion
+        - 3005:3005
+        # for older Bonjour/Avahi network discovery
+        - 5353:5353/udp
+        # for controlling Plex for Roku via Plex Companion
+        - 8324:8324
+        # for current GDM network discovery
+        - 32410:32410/udp
+        - 32412:32412/udp
+        - 32413:32413/udp
+        - 32414:32414/udp
      volumes:
-       -  /media/config:/config
-       -  /media/tv:/tv
-       -  /media/movies:/movies
+       -  /mnt/ellinger_media/config/plex:/config
+       -  /mnt/ellinger_media/tv:/tv
+       -  /mnt/ellinger_media/movies:/movies
      depends_on:
        - sabnzbd
